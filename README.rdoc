@@ -1,0 +1,45 @@
+= Robotstxt
+
+Robotstxt is an Ruby robots.txt file parser.
+
+Robotstxt Parser allows you to the check the accessibility of URLs and get other data. 
+
+Full support for the robots.txt RFC, wildcards and Sitemap: rules.
+
+
+== Features
+
+* Check if the URL is allowed to be crawled from your Robot
+* Analyze the robots.txt file to return an Array containing the list of XML Sitemaps URLs
+
+== Requirements
+
+* Ruby >= 1.8.7 
+
+
+== Installation
+
+This library is intended to be installed via the
+RubyGems[http://rubyforge.org/projects/rubygems/] system.
+
+  $ gem install robotstxt
+
+You might need administrator privileges on your system to install it.
+
+
+
+== Author
+
+Author:: {Simone Rinzivillo}[http://www.simonerinzivillo.it/] <srinzivillo@gmail.com>
+
+
+== Resources
+
+* {Homepage}[http://www.simonerinzivillo.it/]
+
+
+
+== License
+
+Copyright (c) 2009 Simone Rinzivillo, Robotstxt is released under the MIT license.
+

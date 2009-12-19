@@ -1,0 +1,8 @@
+LICENSE.rdoc
+Manifest
+README.rdoc
+Rakefile
+lib/robotstxt.rb
+lib/robotstxt/parser.rb
+test/parser_test.rb
+test/robotstxt_test.rb
