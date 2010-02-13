@@ -24,11 +24,11 @@ module Robotstxt
   NAME            = 'Robotstxt'
   GEM             = 'robotstxt'
   AUTHORS         = ['Simone Rinzivillo <srinzivillo@gmail.com>']
-  VERSION	      = '0.5.2'
+  VERSION	      = '0.5.3'
 
 
   # Check if the <tt>URL</tt> is allowed to be crawled from the current <tt>Robot_id</tt>.
-  # Robots:Allowed? returns <tt>true</tt> if the robots.txt file does not block the access to the URL.
+  # Robotstxt::Allowed? returns <tt>true</tt> if the robots.txt file does not block the access to the URL.
   #
   #  Robotstxt.allowed?('http://www.simonerinzivillo.it/', 'rubytest')
   #

@@ -156,7 +156,7 @@ module Robotstxt
 					@rules.last[2]<< r.gsub(/\*/,'.+') if r.length > 0 
 					
 					when /^\s*sitemap\s*:.+$/
-					@sitemaps<< r.split(':')[1].strip + r.split(':')[2].strip if r.length > 0  		
+					@sitemaps<< r.split(':')[1].strip + ((r.split(':')[2].nil?) ? '' : r.split(':')[2].strip) if r.length > 0  		
 					
 				end
 				
