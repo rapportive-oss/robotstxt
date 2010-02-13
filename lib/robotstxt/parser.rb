@@ -143,7 +143,11 @@ module Robotstxt
 				case r
 					when /^#.+$/
 					
-					when /^\s*user-agent\s*:.+$/
+					when /^\s*user-agent\s*:.+$/ 
+					
+					@rules << [ r.split(':')[1].strip, [], []]
+					
+					when /^\s*useragent\s*:.+$/
 					
 					@rules << [ r.split(':')[1].strip, [], []]
 					
