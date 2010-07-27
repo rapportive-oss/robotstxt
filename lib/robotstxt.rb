@@ -24,7 +24,7 @@ module Robotstxt
   NAME            = 'Robotstxt'
   GEM             = 'robotstxt'
   AUTHORS         = ['Simone Rinzivillo <srinzivillo@gmail.com>']
-  VERSION	      = '0.5.4'
+  VERSION        = '0.5.4'
 
 
   # Check if the <tt>URL</tt> is allowed to be crawled from the current <tt>Robot_id</tt>.
@@ -33,10 +33,10 @@ module Robotstxt
   #  Robotstxt.allowed?('http://www.simonerinzivillo.it/', 'rubytest')
   #
   def self.allowed?(url, robot_id)
-	
-	  u = URI.parse(url)
-	  r = Robotstxt::Parser.new(robot_id)
-		r.allowed?(url) if r.get(u.scheme + '://' + u.host)	
+  
+    u = URI.parse(url)
+    r = Robotstxt::Parser.new(robot_id)
+    r.allowed?(url) if r.get(u.scheme + '://' + u.host)  
     
   end
   
@@ -45,10 +45,10 @@ module Robotstxt
   #  Robotstxt.sitemaps('http://www.simonerinzivillo.it/', 'rubytest')
   #  
   def self.sitemaps(url, robot_id)
-	
-	  u = URI.parse(url)
-	  r = Robotstxt::Parser.new(robot_id)
-		r.sitemaps if r.get(u.scheme + '://' + u.host)	
+  
+    u = URI.parse(url)
+    r = Robotstxt::Parser.new(robot_id)
+    r.sitemaps if r.get(u.scheme + '://' + u.host)  
     
   end
 
