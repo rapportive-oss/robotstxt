@@ -26,13 +26,16 @@ module Robotstxt
 		#
 		# <tt>client = Robotstxt::Robotstxtistance.new('my_robot_id')</tt>
 		#
-		def initialize(robot_id = nil)
+		def initialize(robot_id = nil, body = nil)
 			
 			@robot_id = '*'
 			@rules = []
 			@sitemaps = []
 			@robot_id = robot_id.downcase if !robot_id.nil?
-			
+			if body
+				@body = body
+				parse
+			end
 		end
 		
 		
@@ -91,26 +94,23 @@ module Robotstxt
 		#
 		# This method returns <tt>true</tt> if the robots.txt file does not block the access to the URL.
 		#
+		# Rules are matched in the order they appear in robots.txt
+		# See http://www.robotstxt.org/orig.html and http://www.robotstxt.org/norobots-rfc.txt
+		# (and a high level overview at http://www.robotstxt.org/robotstxt.html)
 		def allowed?(var)
-			is_allow = true
 			url = URI.parse(var)
-			querystring = (!url.query.nil?) ? '?' + url.query : ''
-			url_path = url.path + querystring
+			url_path = (url.path || '/' ) + (url.query ? '?' + url.query : '')
 			
-			@rules.each {|ua|
-				
-				if @robot_id == ua[0] || ua[0] == '*' 
-					
-					ua[1].each {|d|
-						
-						is_allow = false if url_path.match('^' + d ) || d == '/'
-						
-					}
-					
+			@rules.each do |(ua_glob, path_globs)|
+
+				if match_glob @robot_id, ua_glob
+					path_globs.each do |(path_glob, allowed)|
+						return allowed if match_glob url_path, path_glob
+					end
 				end
-				
-			}
-			is_allow
+
+			end
+			true
 		end
 		
 		# Analyze the robots.txt file to return an <tt>Array</tt> containing the list of XML Sitemaps URLs.
@@ -134,40 +134,79 @@ module Robotstxt
 		
 		
 		private
-		
-		def parse()
-			@body = @body.downcase
-			
-			@body.each_line {|r| 
-				
-				case r
-					when /^#.+$/
-					
-					when /^\s*user-agent\s*:.+$/ 
-					
-					@rules << [ r.split(':')[1].strip, [], []]
-					
-					when /^\s*useragent\s*:.+$/
-					
-					@rules << [ r.split(':')[1].strip, [], []]
-					
-					when /^\s*disallow\s*:.+$/
-					r = r.split(':')[1].strip
-					@rules.last[1]<< r.gsub(/\*/,'.+') if r.length > 0 
-					
-					when /^\s*allow\s*:.+$/
-					r = r.split(':')[1].strip
-					@rules.last[2]<< r.gsub(/\*/,'.+') if r.length > 0 
-					
-					when /^\s*sitemap\s*:.+$/
-					@sitemaps<< r.split(':')[1].strip + ((r.split(':')[2].nil?) ? '' : r.split(':')[2].strip) if r.length > 0  		
-					
-				end
-				
-			}
-			
-			
+
+		# Robots.txt doesn't seem to have an official standard that is widely used.
+		# As Google provide clear documentation, and are somewhat of a market-leader
+		# I'll follow their syntax at:
+		# http://www.google.com/support/webmasters/bin/answer.py?hl=en&answer=156449
+		#
+		# A * matches any sequence of characters, all other characters are literals.
+		# A trailing $ forces the pattern to be matched entirely, otherwise it's a prefix match.
+		#
+		# Other search engines seem to only interpret * and $ in certain circumstances, ick.
+		def match_glob(string, glob)
+			suffix = (glob =~ /\$$/ ? "$" : "")
+			expression = glob.split("*").map{|x| Regexp.escape(x) }.join(".*")
+			string =~ Regexp.new("^" + expression + suffix, "i")
 		end
 		
+		# Convert the @body into a set of @rules so that our parsing mechanism
+		# becomes easier.
+		#
+		# @rules is an array of pairs. The first in the pair is the glob for the user-agent
+		# and the second another array of pairs. The first of the new pair is a glob for
+		# the path, and the second whether it appears in an Allow: or a Disallow: rule.
+		#
+		# For example:
+		#
+		# User-agent: *
+		# Allow: /
+		# Disallow: /secret/
+		#
+		# Would be parsed so that:
+		#
+		# @rules = [["*", [
+		#  ["/", true],
+		#  ["/secret/", false]
+		# ]]]
+		#
+		#
+		# The order of the arrays is maintained so that the first match in the file
+		# is obeyed. As indicated by the pseudo-RFC on http://robotstxt.org/
+		#
+		# There is one subtlety in that a blank Disallow: should be treated as an Allow: *
+		def parse()
+			
+			@body.each_line do |line| 
+
+				prefix, value = line.split(":", 2).map(&:strip)
+				
+				if prefix && value
+					case prefix.capitalize
+						when /^User-?agent$/
+							@rules << [value, []]
+
+						when "Disallow"
+							if rules.any?
+								if value == ""
+									@rules.last[1] << ["*", true]
+								else
+									@rules.last[1] << [value, false]
+								end
+							end
+
+						when "Allow"
+							@rules.last[1] << [value, true] if @rules.any?
+
+						when "Sitemap"
+							@sitemaps << value
+
+						else
+							# Ignore comments and badly formed lines.
+
+					end
+				end
+			end
+		end
 	end
 end

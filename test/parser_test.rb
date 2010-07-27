@@ -39,5 +39,46 @@ class TestParser < Test::Unit::TestCase
 	def test_sitemaps
 		assert @client.sitemaps.length() > 0
     end
+
+  def test_sitemap
+		client = Robotstxt::Parser.new("Test", <<-ROBOTS
+User-agent: *
+Disallow: /?*
+Disallow: /home
+Disallow: /dashboard
+Disallow: /terms-conditions
+Disallow: /privacy-policy
+Disallow: /index.php
+Disallow: /chargify_system
+Disallow: /test*
+Disallow: /team*
+Disallow: /index
+Allow: /
+Sitemap: http://chargify.com/sitemap.xml
+ROBOTS
+)
+		assert true == client.allowed?("/")
+		assert false == client.allowed?("/?")
+		assert false == client.allowed?("/?key=value")
+		assert true == client.allowed?("/example")
+		assert true == client.allowed?("/example/index.php")
+		assert false == client.allowed?("/test")
+		assert false == client.allowed?("/test/example")
+		assert false == client.allowed?("/team-game")
+		assert false == client.allowed?("/team-game/example")
+
+	end
+
+	def test_useragents
+		robotstxt = <<-ROBOTS
+User-agent: Google
+Disallow:
+
+User-agent: *
+Disallow: /
+ROBOTS
+		assert true == Robotstxt::Parser.new("Google", robotstxt).allowed?("/hello")
+		assert false == Robotstxt::Parser.new("Bing", robotstxt).allowed?("/hello")
+	end
 	
 end
