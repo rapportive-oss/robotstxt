@@ -5,42 +5,7 @@ require 'robotstxt'
 
 class TestParser < Test::Unit::TestCase
   
-  def setup
-    @client = Robotstxt::Parser.new('rubytest')
-    @client.get('http://www.simonerinzivillo.it')
-  end
-  
-  def test_initialize
-    client = Robotstxt::Parser.new('*')
-    assert_instance_of Robotstxt::Parser, client
-  end  
-  
-  def test_get_file_robotstxt
-    assert @client.get('http://www.simonerinzivillo.it')
-    end
-  
-  def test_robotstxt_isfound
-    assert @client.found?()
-    end
-  
-  def test_url_allowed
-    assert true ==  @client.allowed?('http://www.simonerinzivillo.it/')
-    assert false == @client.allowed?('http://www.simonerinzivillo.it/no-dir/')
-    assert false == @client.allowed?('http://www.simonerinzivillo.it/foo-no-dir/')
-    assert false == @client.allowed?('http://www.simonerinzivillo.it/foo-no-dir/page.html')
-    assert false == @client.allowed?('http://www.simonerinzivillo.it/dir/page.php')
-    assert false == @client.allowed?('http://www.simonerinzivillo.it/page.php?var=0')
-    assert false == @client.allowed?('http://www.simonerinzivillo.it/dir/page.php?var=0')
-    assert true == @client.allowed?('http://www.simonerinzivillo.it/blog/')
-    assert true == @client.allowed?('http://www.simonerinzivillo.it/blog/page.php')
-    assert false == @client.allowed?('http://www.simonerinzivillo.it/blog/page.php?var=0')
-    end
-  
-  def test_sitemaps
-    assert @client.sitemaps.length() > 0
-    end
-
-  def test_sitemap
+  def test_basics
     client = Robotstxt::Parser.new("Test", <<-ROBOTS
 User-agent: *
 Disallow: /?*
@@ -69,15 +34,54 @@ ROBOTS
 
   end
 
+  def test_blank_disallow
+    google = Robotstxt::Parser.new("Google", <<-ROBOTSTXT
+User-agent: *
+Disallow:
+ROBOTSTXT
+                                  )
+    assert true == google.allowed?("/")
+    assert true == google.allowed?("/index.html")
+  end
+
+  def test_url_escaping
+    google = Robotstxt::Parser.new("Google", <<-ROBOTSTXT
+User-agent: *
+Disallow: /test/
+Disallow: /secret%2Fgarden/
+Disallow: /%61lpha/
+ROBOTSTXT
+)
+    assert true == google.allowed?("/allowed/")
+    assert false == google.allowed?("/test/")
+    assert true == google.allowed?("/test%2Fetc/")
+    assert false == google.allowed?("/secret%2fgarden/")
+    assert true == google.allowed?("/secret/garden/")
+    assert false == google.allowed?("/alph%61/")
+  end
+
+  def test_trail_matching
+    google = Robotstxt::Parser.new("Google", <<-ROBOTSTXT
+User-agent: *
+Disallow: /*.pdf$
+ROBOTSTXT
+)
+    assert true == google.allowed?("/.pdfs/index.html")
+    assert false == google.allowed?("/.pdfs/index.pdf")
+    assert false == google.allowed?("/.pdfs/index.pdf?action=view")
+  end
+
   def test_useragents
     robotstxt = <<-ROBOTS
 User-agent: Google
+User-agent: Yahoo
 Disallow:
 
 User-agent: *
 Disallow: /
 ROBOTS
     assert true == Robotstxt::Parser.new("Google", robotstxt).allowed?("/hello")
+    assert true == Robotstxt::Parser.new("Yahoo", robotstxt).allowed?("/hello")
     assert false == Robotstxt::Parser.new("Bing", robotstxt).allowed?("/hello")
   end
   
