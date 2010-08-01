@@ -2,20 +2,177 @@
 
 Robotstxt is an Ruby robots.txt file parser.
 
-Robotstxt Parser allows you to the check the accessibility of URLs and get other data. 
+It provides mechanisms for obtaining and parsing the robots.txt file from
+websites. As there is no official "standard" it tries to do something sensible,
+though inspiration was taken from:
 
-Full support for the robots.txt RFC, wildcards and Sitemap: rules.
+ - http://www.robotstxt.org/orig.html
+ - http://www.robotstxt.org/norobots-rfc.txt
+ - http://www.google.com/support/webmasters/bin/answer.py?hl=en&answer=156449&from=35237
+ - http://nikitathespider.com/articles/RobotsTxt.html
+
+While the parsing semantics of this library are explained below, you should not
+write sitemaps that depend on all robots acting the same -- they simply won't.
+Even the various different ruby libraries support very different subsets of
+functionality.
+
+This gem builds on the work of Simone Rinzivillo, and is released under the MIT
+license -- see the LICENSE file.
+
+== Usage
+
+There are two public points of interest, firstly the Robotstxt module, and
+secondly the Robotstxt::Parser class.
+
+The Robotstxt module has three public methods:
+
+ - Robotstxt.get source, user_agent, (options)
+   Returns a Robotstxt::Parser for the robots.txt obtained from source.
+
+ - Robotstxt.parse robots_txt, user_agent
+   Returns a Robotstxt::Parser for the robots.txt passed in
+
+ - Robotstxt.get_allowed? urlish, user_agent, (options)
+   Returns true iff the robots.txt obtained from the host identified by the
+   urlish allows access to the url.
+
+The Robotstxt::Parser class contains two pieces of state, the user_agent and the
+text of the robots.txt. In addition its instances have two public methods:
+
+ - Robotstxt::Parser#allowed? urlish
+   Returns true iff the robots.txt file allows this user_agent access to that
+   url.
+
+ - Robotstxt::Parser#sitemaps
+   Returns a list of the sitemaps listed in the robots.txt file.
+
+In the above there are five kinds of parameter,
+
+    A "urlish" is either a String that represents a URL (suitable for passing to
+    URI.parse), i.e.
+
+      urlish = "http://www.example.com/"
+      urlish = "/index.html"
+      urlish = https://compicat.ed/home?action=fire#joking"
+      urlish = URI.parse("http://example.co.uk")
+
+    A "source" is either a "urlish", or a Net::HTTP connection. This allows the
+    library to re-use the same connection when the server respects Keep-alive:
+    headers, i.e.
+
+      source = Net::HTTP.new("example.com", 80)
+      Net::HTTP.start("example.co.uk", 80) do |http|
+        source = http
+      end
+      source = "http://www.example.com/index.html"
+
+    When a "urlish" is provided, only the host and port sections are used, and
+    the path is forced to "/robots.txt".
+
+    A "robots_txt" is the textual content of a robots.txt file that is in the
+    same encoding as the urls you will be fetching (normally utf8).
+
+    A "user_agent" is the value you use in your User-agent: header.
+
+    The "options" is an optional hash containing 
+      :num_redirects (5) - the number of redirects to follow before giving up.
+      :http_timeout (10) - the length of time in seconds to wait for one http
+                           request
+      :url_charset (utf8) - the charset which you will use to encode your urls.
+
+    I recommend not passing the options unless you have to.
+
+== Examples
+
+  url = "http://example.com/index.html"
+  if Robotstxt.get_allowed?(url, "Crawler")
+    open(url)
+  end
 
 
-== Features
+  Net::HTTP.start("example.co.uk") do |http|
+    robots = Robotstxt.get(http, "Crawler")
 
-* Check if the URL is allowed to be crawled from your Robot
-* Analyze the robots.txt file to return an Array containing the list of XML Sitemaps URLs
+    if robots.allowed? "/index.html"
+      http.get("/index.html")
+    elsif robots.allowed? "/index.php"
+      http.get("/index.php")
+    end
+  end
+
+== Details
+
+=== Request level
+
+This library handles different HTTP status codes according to the specifications
+on robotstxt.org, in particular:
+
+If an HTTPUnauthorized or an HTTPForbidden is returned when trying to access
+/robots.txt, then the entire site should be considered "Disallowed".
+
+If an HTTPRedirection  is returned, it should be followed (though we give up
+after five redirects, to avoid infinite loops).
+
+If an HTTPSuccess is returned, the body is converted into utf8 using the value
+of the charset option to the Content-type: header, and then parsed.
+
+Any other response, or no response, indicates that there are no Disallowed urls
+no the site.
+
+=== User-agent matching
+
+This is case-insensitive, substring matching, i.e. equivalent to matching the
+user agent with /.*thing.*/i.
+
+Additionally, * characters are interpreted as meaning any number of any character (in
+regular expression idiom: /.*/). Google implies that it does this, at least for
+trailing *s, and the standard implies that "*" is a special user agent meaning
+"everything not referred to so far".
+
+There can be multiple User-agent: lines for each section of Allow: and Disallow:
+lines in the robots.txt file:
+
+User-agent: Google
+User-agent: Bing
+Disallow: /secret
+
+In cases like this, all user-agents inherit the same set of rules.
+
+=== Path matching
+
+This is case-sensitive prefix matching, i.e. equivalent to matching the
+requested path (or path + '?' + query) against /^thing.*/. As with user-agents,
+* is interpreted as any number of any character.
+
+Additionally, when the pattern ends with a $, it forces the pattern to match the
+entire path (or path + ? + query).
+
+In order to get consistent results, before the globs are matched, the %-encoding
+is normalised so that only /?&= remain %-encoded. For example, /h%65llo/ is the
+same as /hello/, but /ac%2fdc is not the same as /ac/dc - this is due to the
+significance granted to the / operator in urls. 
+
+The paths of the first section that matched our user-agent (by order of
+appearance in the file) are parsed in order of appearance. The first Allow: or
+Disallow: rule that matches the url is accepted. This is prescribed by
+robotstxt.org, but other parsers take wildly different strategies:
+    Google checks all Allows: then all Disallows:
+    Bing checks the most-specific first 
+    Others check all Disallows: then all Allows
+
+As is conventional, a "Disallow: " line with no path given is treated as 
+"Allow: *", and if a URL didn't match any path specifiers (or the user-agent
+didn't match any user-agent sections) then that is implicit permission to crawl.
+
+== TODO
+
+I would like to add support for the Crawl-delay directive, and indeed any other
+parameters that are found in the wild.
 
 == Requirements
 
 * Ruby >= 1.8.7 
-
+* iconv, net/http and uri
 
 == Installation
 
@@ -26,20 +183,14 @@ RubyGems[http://rubyforge.org/projects/rubygems/] system.
 
 You might need administrator privileges on your system to install it.
 
-
-
 == Author
 
+Author:: {Conrad Irwin} <conrad@rapportive.com>
 Author:: {Simone Rinzivillo}[http://www.simonerinzivillo.it/] <srinzivillo@gmail.com>
-
-
-== Resources
-
-* {Homepage}[http://www.simonerinzivillo.it/]
-
-
 
 == License
 
-Copyright (c) 2009 Simone Rinzivillo, Robotstxt is released under the MIT license.
+Robotstxt is released under the MIT license.
+Copyright (c) 2010 Conrad Irwin
+Copyright (c) 2009 Simone Rinzivillo
 
