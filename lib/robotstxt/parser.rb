@@ -12,22 +12,12 @@
 #--
 #
 #++
-
-require 'net/http'
-require 'uri'
-
-# TODO: 
-#  Test: nasty URLs /../, or /%09, etc.
-#  Test: non-ascii user-agent matching
-#  Write: getters, and decoders
-
-
 module Robotstxt
   # The parser aims to behave as expected, using a few sources for guidance:
   #
-  # http://www.robotstxt.org/orig.html 
+  # http://www.robotstxt.org/orig.html
   #  - the original, now imprecise and outdated version
-  # http://www.robotstxt.org/norobots-rfc.txt 
+  # http://www.robotstxt.org/norobots-rfc.txt
   #  - a much more precise, outdated version
   # http://www.google.com/support/webmasters/bin/answer.py?hl=en&answer=156449&from=35237
   #  - a few hints at modern protocol extensions.
@@ -61,6 +51,7 @@ module Robotstxt
   # path with query string.
   #
   class Parser
+    include CommonMethods
 
     # Gets every Sitemap mentioned in the body of the robots.txt file.
     #
@@ -75,42 +66,33 @@ module Robotstxt
     # written for version 0.5.4.
     #
     def initialize(user_agent, body=nil)
-      
       @robot_id = user_agent
       if body
         @found = true
-        parse(body) # set @rules and @sitemaps
+        parse(body) # set @body, @rules and @sitemaps
       end
-      
     end
-    
-    # Given a URI object, or a string representing one, determine whether this 
+
+    # Given a URI object, or a string representing one, determine whether this
     # robots.txt would allow access to the path.
     def allowed?(uri)
 
-      if uri.is_a? String
-        # URI.parse will explode when given a character that it thinks
-        # shouldn't appear in uris. We thus escape them before passing the
-        # string into the function. Unfortunately URI.escape does not respect
-        # all characters that have meaning in HTTP (esp. #), so we are forced
-        # to state exactly which characters we would like to keep.
-        uri = URI.escape(uri, %r{[^!$#%&'()*+,\-./0-9:;=?@A-Z\[\\\]_a-z~]})
-        uri = URI.parse(uri)
-      end
-
-      path = (uri.path || "/") + (uri.query ? '?' + uri.query : '') 
+      uri = objectify_uri(uri)
+      path = (uri.path || "/") + (uri.query ? '?' + uri.query : '')
       path_allowed?(@robot_id, path)
 
     end
 
     # DEPRECATED
-    
+
     # These methods are from the old API (v. 0.5.4), they should still work
     # but are no longer supported or recommended.
     attr_accessor :robot_id
 
     # Get obtains a new @body from the given URL.
-    def get(url); end
+    def get(url);
+      parse(Robotstxt.obtain(url, @robot_id))
+    end
     attr_reader :body
 
     # Did we find anything when you called get?
@@ -121,10 +103,10 @@ module Robotstxt
     # added to this class and exposed at a higher level.
     #
     def rules; raise "The rules format was updated after version 0.5.4"; end
-    
+
     protected
 
-    # Check whether the relative path (a string of the url's path and query 
+    # Check whether the relative path (a string of the url's path and query
     # string) is allowed by the rules we have for the given user_agent.
     #
     def path_allowed?(user_agent, path)
@@ -143,7 +125,7 @@ module Robotstxt
     end
 
 
-    # This does a case-insensitive substring match such that if the user agent 
+    # This does a case-insensitive substring match such that if the user agent
     # is contained within the glob, or vice-versa, we will match.
     #
     # According to the standard, *s shouldn't appear in the user-agent field
@@ -230,7 +212,7 @@ module Robotstxt
       glob.split("*", -1).map{|part| Regexp.escape(part) }.join(".*")
 
     end
-    
+
     # Convert the @body into a set of @rules so that our parsing mechanism
     # becomes easier.
     #
@@ -259,13 +241,14 @@ module Robotstxt
     #
     def parse(body)
 
+      @body = body
       @rules = []
       @sitemaps = []
-      body.each_line do |line| 
+      body.each_line do |line|
 
         prefix, value = line.split(":", 2).map(&:strip)
         parser_mode = :begin
-        
+
         if prefix && value
           case prefix.capitalize
 
