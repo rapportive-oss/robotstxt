@@ -6,7 +6,7 @@
 #
 # Category::    Net
 # Package::     Robotstxt
-# Author::      Simone Rinzivillo <srinzivillo@gmail.com>
+# Author::      Conrad Irwin <conrad@rapportive.com>, Simone Rinzivillo <srinzivillo@gmail.com>
 # License::     MIT License
 #
 #--
@@ -17,12 +17,15 @@ require 'robotstxt/common'
 require 'robotstxt/parser'
 require 'robotstxt/getter'
 
+# Provides a flexible interface to help authors of web-crawlers
+# respect the robots.txt exclusion standard.
+#
 module Robotstxt
 
   NAME            = 'Robotstxt'
   GEM             = 'robotstxt'
-  AUTHORS         = ['Simone Rinzivillo <srinzivillo@gmail.com>']
-  VERSION        = '0.5.4'
+  AUTHORS         = ['Conrad Irwin <conrad@rapportive.com>', 'Simone Rinzivillo <srinzivillo@gmail.com>']
+  VERSION        = '1.0'
 
   # Obtains and parses a robotstxt file from the host identified by source,
   # source can either be a URI, a string representing a URI, or a Net::HTTP
@@ -85,7 +88,7 @@ module Robotstxt
   end
 
   # DEPRECATED
-  
+
   def self.allowed?(uri, robot_id); self.get(uri, robot_id).allowed? uri; end
   def self.sitemaps(uri, robot_id); self.get(uri, robot_id).sitemaps; end
 

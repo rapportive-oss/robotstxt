@@ -2,7 +2,11 @@
 
 Robotstxt is an Ruby robots.txt file parser.
 
-It provides mechanisms for obtaining and parsing the robots.txt file from
+The robots.txt exclusion protocol is a simple mechanism whereby site-owners can guide
+any automated crawlers to relevant parts of their site, and prevent them accessing content
+which is intended only for other eyes. For more information, see http://www.robotstxt.org/.
+
+This library provides mechanisms for obtaining and parsing the robots.txt file from
 websites. As there is no official "standard" it tries to do something sensible,
 though inspiration was taken from:
 
@@ -34,7 +38,7 @@ The Robotstxt module has three public methods:
 
  - Robotstxt.get_allowed? urlish, user_agent, (options)
    Returns true iff the robots.txt obtained from the host identified by the
-   urlish allows access to the url.
+   urlish allows the given user agent access to the url.
 
 The Robotstxt::Parser class contains two pieces of state, the user_agent and the
 text of the robots.txt. In addition its instances have two public methods:
@@ -49,7 +53,7 @@ text of the robots.txt. In addition its instances have two public methods:
 In the above there are five kinds of parameter,
 
     A "urlish" is either a String that represents a URL (suitable for passing to
-    URI.parse), i.e.
+    URI.parse) or a URI object, i.e.
 
       urlish = "http://www.example.com/"
       urlish = "/index.html"
@@ -72,9 +76,9 @@ In the above there are five kinds of parameter,
     A "robots_txt" is the textual content of a robots.txt file that is in the
     same encoding as the urls you will be fetching (normally utf8).
 
-    A "user_agent" is the value you use in your User-agent: header.
+    A "user_agent" is the string value you use in your User-agent: header.
 
-    The "options" is an optional hash containing 
+    The "options" is an optional hash containing
       :num_redirects (5) - the number of redirects to follow before giving up.
       :http_timeout (10) - the length of time in seconds to wait for one http
                            request
@@ -113,8 +117,7 @@ If an HTTPUnauthorized or an HTTPForbidden is returned when trying to access
 If an HTTPRedirection  is returned, it should be followed (though we give up
 after five redirects, to avoid infinite loops).
 
-If an HTTPSuccess is returned, the body is converted into utf8 using the value
-of the charset option to the Content-type: header, and then parsed.
+If an HTTPSuccess is returned, the body is converted into utf8, and then parsed.
 
 Any other response, or no response, indicates that there are no Disallowed urls
 no the site.
@@ -150,28 +153,28 @@ entire path (or path + ? + query).
 In order to get consistent results, before the globs are matched, the %-encoding
 is normalised so that only /?&= remain %-encoded. For example, /h%65llo/ is the
 same as /hello/, but /ac%2fdc is not the same as /ac/dc - this is due to the
-significance granted to the / operator in urls. 
+significance granted to the / operator in urls.
 
 The paths of the first section that matched our user-agent (by order of
 appearance in the file) are parsed in order of appearance. The first Allow: or
 Disallow: rule that matches the url is accepted. This is prescribed by
 robotstxt.org, but other parsers take wildly different strategies:
     Google checks all Allows: then all Disallows:
-    Bing checks the most-specific first 
+    Bing checks the most-specific first
     Others check all Disallows: then all Allows
 
-As is conventional, a "Disallow: " line with no path given is treated as 
+As is conventional, a "Disallow: " line with no path given is treated as
 "Allow: *", and if a URL didn't match any path specifiers (or the user-agent
 didn't match any user-agent sections) then that is implicit permission to crawl.
 
 == TODO
 
 I would like to add support for the Crawl-delay directive, and indeed any other
-parameters that are found in the wild.
+parameters in use.
 
 == Requirements
 
-* Ruby >= 1.8.7 
+* Ruby >= 1.8.7
 * iconv, net/http and uri
 
 == Installation

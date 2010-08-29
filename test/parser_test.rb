@@ -4,7 +4,7 @@ require 'test/unit'
 require 'robotstxt'
 
 class TestParser < Test::Unit::TestCase
-  
+
   def test_basics
     client = Robotstxt::Parser.new("Test", <<-ROBOTS
 User-agent: *
@@ -19,7 +19,7 @@ Disallow: /test*
 Disallow: /team*
 Disallow: /index
 Allow: /
-Sitemap: http://chargify.com/sitemap.xml
+Sitemap: http://example.com/sitemap.xml
 ROBOTS
 )
     assert true == client.allowed?("/")
@@ -31,6 +31,7 @@ ROBOTS
     assert false == client.allowed?("/test/example")
     assert false == client.allowed?("/team-game")
     assert false == client.allowed?("/team-game/example")
+    assert ["http://example.com/sitemap.xml"] == client.sitemaps
 
   end
 
@@ -69,6 +70,7 @@ ROBOTSTXT
     assert true == google.allowed?("/.pdfs/index.html")
     assert false == google.allowed?("/.pdfs/index.pdf")
     assert false == google.allowed?("/.pdfs/index.pdf?action=view")
+    assert false == google.allowed?("/.pdfs/index.html?download_as=.pdf")
   end
 
   def test_useragents
@@ -84,5 +86,5 @@ ROBOTS
     assert true == Robotstxt::Parser.new("Yahoo", robotstxt).allowed?("/hello")
     assert false == Robotstxt::Parser.new("Bing", robotstxt).allowed?("/hello")
   end
-  
+
 end

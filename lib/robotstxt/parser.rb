@@ -1,19 +1,10 @@
-#
-# = Ruby Robotstxt
-#
-# An Ruby Robots.txt parser.
-#
-#
-# Category::    Net
-# Package::     Robotstxt
-# Author::      Simone Rinzivillo <srinzivillo@gmail.com>
-# License::     MIT License
-#
-#--
-#
-#++
+
 module Robotstxt
-  # The parser aims to behave as expected, using a few sources for guidance:
+  # Parses robots.txt files for the perusal of a single user-agent.
+  #
+  # The behaviour implemented is guided by the following sources, though
+  # as there is no widely accepted standard, it may differ from other implementations.
+  # If you consider its behaviour to be in error, please contact the author.
   #
   # http://www.robotstxt.org/orig.html
   #  - the original, now imprecise and outdated version
@@ -22,17 +13,14 @@ module Robotstxt
   # http://www.google.com/support/webmasters/bin/answer.py?hl=en&answer=156449&from=35237
   #  - a few hints at modern protocol extensions.
   #
-  # Unfortunately, as hinted at on that page, there is no reference implementation
-  # or widely accepted standard, and attempts to create one seem to have stalled.
-  #
-  # This parser reads lines starting with (case-insensitively:)
+  # This parser only considers lines starting with (case-insensitively:)
   #  Useragent: User-agent: Allow: Disallow: Sitemap:
-  #
+  # 
   # The file is divided into sections, each of which contains one or more User-agent:
   # lines, followed by one or more Allow: or Disallow: rules.
   #
-  # The first section that contains a User-agent: line that matches the robots
-  # user-agent, is the only section that robot looks at. The sections are checked
+  # The first section that contains a User-agent: line that matches the robot's
+  # user-agent, is the only section that relevent to that robot. The sections are checked
   # in the same order as they appear in the file.
   #
   # (The * character is taken to mean "any number of any characters" during matching of
@@ -44,8 +32,8 @@ module Robotstxt
   # (The order of matching is as in the RFC, Google matches all Allows and then all Disallows,
   #  while Bing matches the most specific rule, I'm sure there are other interpretations)
   #
-  # When matching urls, all % encodings are normalised so that only the "/?&=" characters are
-  # still escaped, while "*" characters match any number of any character.
+  # When matching urls, all % encodings are normalised (except for /?=& which have meaning)
+  # and "*"s match any number of any character.
   #
   # If a pattern ends with a $, then the pattern must match the entire path, or the entire
   # path with query string.
@@ -209,7 +197,7 @@ module Robotstxt
     def reify(glob)
 
       # -1 on a split prevents trailing empty strings from being deleted.
-      glob.split("*", -1).map{|part| Regexp.escape(part) }.join(".*")
+      glob.split("*", -1).map{ |part| Regexp.escape(part) }.join(".*")
 
     end
 
@@ -223,11 +211,13 @@ module Robotstxt
     #
     # For example:
     #
-    # User-agent: * Allow: / Disallow: /secret/
+    # User-agent: *
+    # Disallow: /secret/
+    # Allow: /
     #
     # Would be parsed so that:
     #
-    # @rules = [["*", [ ["/", true], ["/secret/", false] ]]]
+    # @rules = [["*", [ ["/secret/", false], ["/", true] ]]]
     #
     #
     # The order of the arrays is maintained so that the first match in the file
