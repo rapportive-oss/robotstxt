@@ -15,7 +15,7 @@ module Robotstxt
           # string into the function. Unfortunately URI.escape does not respect
           # all characters that have meaning in HTTP (esp. #), so we are forced
           # to state exactly which characters we would like to escape.
-          uri = URI.escape(uri, %r{[^!$#%&'()*+,\-./0-9:;=?@A-Z\[\\\]_a-z~]})
+          uri = URI.escape(uri, %r{[^!$#%&'()*+,\-./0-9:;=?@A-Z_a-z~]})
           uri = URI.parse(uri)
         else
           uri
