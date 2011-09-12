@@ -11,14 +11,14 @@ Gem::Specification.new do |s|
 }
   s.email = %q{srinzivillo@gmail.com}
   s.extra_rdoc_files = ["LICENSE.rdoc", "README.rdoc", "lib/robotstxt.rb", "lib/robotstxt/parser.rb"]
-  s.files = ["LICENSE.rdoc", "Manifest", "README.rdoc", "Rakefile", "lib/robotstxt.rb", "lib/robotstxt/parser.rb", "test/parser_test.rb", "test/robotstxt_test.rb", "robotstxt.gemspec"]
+  s.files = ["LICENSE.rdoc", "Manifest", "README.rdoc", "Rakefile", "lib/robotstxt.rb", "lib/robotstxt/parser.rb", "test/parser_test.rb", "test/getter_test.rb", "robotstxt.gemspec"]
   s.homepage = %q{http://www.simonerinzivillo.it}
   s.rdoc_options = ["--line-numbers", "--inline-source", "--title", "Robotstxt", "--main", "README.rdoc"]
   s.require_paths = ["lib"]
   s.rubyforge_project = %q{robotstxt}
   s.rubygems_version = %q{1.3.5}
   s.summary = %q{Robotstxt is an Ruby robots.txt file parser}
-  s.test_files = ["test/parser_test.rb", "test/robotstxt_test.rb"]
+  s.test_files = ["test/parser_test.rb", "test/getter_test.rb"]
 
   if s.respond_to? :specification_version then
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
