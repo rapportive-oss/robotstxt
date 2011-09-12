@@ -87,4 +87,12 @@ ROBOTS
     assert false == Robotstxt::Parser.new("Bing", robotstxt).allowed?("/hello")
   end
 
+  def test_missing_useragent
+    robotstxt = <<-ROBOTS
+Disallow: /index
+ROBOTS
+    assert true === Robotstxt::Parser.new("Google", robotstxt).allowed?("/hello")
+    assert false === Robotstxt::Parser.new("Google", robotstxt).allowed?("/index/wold")
+  end
+
 end

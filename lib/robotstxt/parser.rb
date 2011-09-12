@@ -253,21 +253,20 @@ module Robotstxt
 
             when "Disallow"
 
-              if @rules.any?
-                parser_mode = :rules
-                if value == ""
-                  @rules.last[1] << ["*", true]
-                else
-                  @rules.last[1] << [value, false]
-                end
+              parser_mode = :rules
+              @rules << ["*", []] if @rules.empty?
+
+              if value == ""
+                @rules.last[1] << ["*", true]
+              else
+                @rules.last[1] << [value, false]
               end
 
             when "Allow"
 
-              if @rules.any?
-                parser_mode = :rules
-                @rules.last[1] << [value, true]
-              end
+              parser_mode = :rules
+              @rules << ["*", []] if @rules.empty?
+              @rules.last[1] << [value, true]
 
             when "Sitemap"
               @sitemaps << value
