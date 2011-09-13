@@ -234,7 +234,7 @@ module Robotstxt
       @body = body
       @rules = []
       @sitemaps = []
-      body.each_line do |line|
+      body.split(/[\r\n]+/).each do |line|
 
         prefix, value = line.split(":", 2).map(&:strip)
         parser_mode = :begin

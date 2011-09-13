@@ -95,4 +95,9 @@ ROBOTS
     assert false === Robotstxt::Parser.new("Google", robotstxt).allowed?("/index/wold")
   end
 
+  def test_strange_newlines
+    robotstxt = "User-agent: *\r\r\rDisallow: *"
+    assert false === Robotstxt::Parser.new("Google", robotstxt).allowed?("/index/wold")
+  end
+
 end
