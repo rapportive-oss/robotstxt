@@ -213,7 +213,7 @@ module Robotstxt
     #
     # User-agent: *
     # Disallow: /secret/
-    # Allow: /
+    # Allow: /     # allow everything...
     #
     # Would be parsed so that:
     #
@@ -237,6 +237,7 @@ module Robotstxt
       body.split(/[\r\n]+/).each do |line|
 
         prefix, value = line.split(":", 2).map(&:strip)
+        value.sub! /\s+#.*/, '' if value
         parser_mode = :begin
 
         if prefix && value

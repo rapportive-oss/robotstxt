@@ -8,7 +8,7 @@ class TestParser < Test::Unit::TestCase
   def test_basics
     client = Robotstxt::Parser.new("Test", <<-ROBOTS
 User-agent: *
-Disallow: /?*
+Disallow: /?*\t\t\t#comment
 Disallow: /home
 Disallow: /dashboard
 Disallow: /terms-conditions
@@ -16,9 +16,9 @@ Disallow: /privacy-policy
 Disallow: /index.php
 Disallow: /chargify_system
 Disallow: /test*
-Disallow: /team*
+Disallow: /team*     # comment
 Disallow: /index
-Allow: /
+Allow: /    # comment
 Sitemap: http://example.com/sitemap.xml
 ROBOTS
 )
@@ -64,6 +64,7 @@ ROBOTSTXT
   def test_trail_matching
     google = Robotstxt::Parser.new("Google", <<-ROBOTSTXT
 User-agent: *
+   #comments
 Disallow: /*.pdf$
 ROBOTSTXT
 )
