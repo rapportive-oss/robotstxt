@@ -164,7 +164,16 @@ module Robotstxt
       glob = normalize_percent_encoding(glob)
       path = normalize_percent_encoding(path)
 
-      path =~ Regexp.new("^" + reify(glob) + end_marker)
+      # NOTE: We're using non-unicode regular expressions because a small
+      # portion of the internet has robots.txt files which contain invalid
+      # encodings. Even if you try to convert the file to utf-8 first, you'll
+      # miss urls with %-encoded routes.
+      #
+      # More work is needed to determine whether that's because they're using
+      # non-utf8 urls (in which case a binary pattern match is probably desirable)
+      # or whether it's just misconfiguration, in which case it doesn't matter
+      # what we do.
+      path =~ Regexp.new("^" + reify(glob) + end_marker, "n")
 
     end
 
