@@ -2,6 +2,7 @@ $:.unshift(File.dirname(__FILE__) + '/../lib')
 
 require 'test/unit'
 require 'robotstxt'
+require 'cgi'
 
 class TestParser < Test::Unit::TestCase
 
@@ -99,6 +100,11 @@ ROBOTS
   def test_strange_newlines
     robotstxt = "User-agent: *\r\r\rDisallow: *"
     assert false === Robotstxt::Parser.new("Google", robotstxt).allowed?("/index/wold")
+  end
+
+  def test_bad_unicode
+    robotstxt = "User-agent: *\ndisallow: /?id=%C3%CB%D1%CA%A4%C5%D4%BB%C7%D5%B4%D5%E2%CD\n"
+    assert true ===Robotstxt::Parser.new("Google", robotstxt).allowed?("/index/wold")
   end
 
 end
