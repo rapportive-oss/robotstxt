@@ -1,5 +1,7 @@
 require 'uri'
-require 'iconv'
+begin
+  require 'iconv'
+rescue LoadError; end
 require 'net/http'
 
 module Robotstxt

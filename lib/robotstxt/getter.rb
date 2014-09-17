@@ -70,7 +70,10 @@ module Robotstxt
     # In the case that we can't decode, Ruby's laissez faire attitude to encoding
     # should mean that we have a reasonable chance of working anyway.
     def decode_body(response, charset)
+      return nil if response.body.nil?
       Iconv.conv(charset, (response.type_params['charset'] || "ISO-8859-1"), response.body)
+    rescue NameError # iconv does not exist in Ruby 2+
+      response.body.encode('UTF-8', :invalid => :replace, :replace => '').encode('UTF-8')
     rescue Iconv::IllegalSequence, Iconv::InvalidCharacter, Iconv::InvalidEncoding
       response.body
     end
